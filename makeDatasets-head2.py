@@ -5,12 +5,12 @@ import time
 import cv2
 from xml.dom import minidom
 
-xmlFolder = "datasets/head/1600x1600/labels"
-imgFolder = "datasets/head/1600x1600/images"
+xmlFolder = "datasets/head_capture/labels"
+imgFolder = "datasets/head_capture/images"
 labelName = "head"
 
 #All files and setting will save to the project folder
-folderPROJECT = "misoffice"
+folderPROJECT = "misoffice2"
 
 makeROI_dataset = True
 roiSaveToFolder = "heads"  #If empty, the roi image from the labels will not be saved.

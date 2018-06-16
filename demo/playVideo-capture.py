@@ -11,15 +11,19 @@ import cv2
 import sys
 import time
 import datetime
+#from getch import getch, pause
 
+#-----------------------------------------------
 maxPeopleInSeconds = 60  # secoonds, we will take the max number peoples as correct number in this time range.
 peopleCount = []
 
 videoPath = "/media/sf_ShareFolder/misBLock-2x.mp4"
 face_size = (24, 24)
 monitor_winSize = (640, 640)
+captureFolder = "captures"
+face_cascade = cv2.CascadeClassifier('cascad_v5.xml')
 
-face_cascade = cv2.CascadeClassifier('head_step3.xml')
+#-----------------------------------------------------------
 
 camera = cv2.VideoCapture(videoPath)
 #camera.set(cv2.CAP_PROP_FRAME_WIDTH, cam_resolution[0])
@@ -38,15 +42,20 @@ def peopleNumerList(numPeople = 0):
 
     peopleCount.append(numPeople)
 
+if not os.path.exists(captureFolder + "/"):
+    os.makedirs(captureFolder + "/")
+
 while(camera.isOpened()):
-    (grabbed, img) = camera.read()   
+    (grabbed, img) = camera.read()
+    imgSource = img.copy()
+
     if(grabbed):	
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	
         faces = face_cascade.detectMultiScale(
             gray,
             scaleFactor= 1.1,
-            minNeighbors=8,
+            minNeighbors=6,
             minSize=face_size,
             flags=cv2.CASCADE_SCALE_IMAGE
         )
@@ -56,12 +65,13 @@ while(camera.isOpened()):
         for (x,y,w,h) in faces:
 	
             if( (w>face_size[0] and h>face_size[1])):
-                #roi_color = img[y:y+h, x:x+w]
-                #now=datetime.datetime.now()
-                #faceName = '%s_%s_%s_%s_%s_%s_%s.jpg' % (now.year, now.month, now.day, now.hour, now.minute, now.second, i)
-                #cv2.imwrite(savePath+"/" + faceName, roi_color)
-                cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),3)            
+                roi = imgSource[y:y+h, x:x+w]
+                now=datetime.datetime.now()
+                faceName = '%s_%s_%s_%s_%s_%s_%s.jpg' % (now.year, now.month, now.day, now.hour, now.minute, now.second, i)
+
+                cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),3)
                 i += 1
+
 
         peopleNumerList(i) #Put the current people counts to array.
         r = monitor_winSize[1] / img.shape[1]
@@ -71,6 +81,11 @@ while(camera.isOpened()):
 
         cv2.imshow("Frame", img2)
         key = cv2.waitKey(1)
+        if key==99:  # c on keyboard
+            cv2.imwrite(captureFolder + "/" + str(time.time()) + ".jpg", imgSource)
+            print("Screen captured.")
+
     else:
         print("loop...")
         camera.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
