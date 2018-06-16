@@ -15,7 +15,7 @@ folderPROJECT = "misoffice"
 makeROI_dataset = True
 roiSaveToFolder = "heads"  #If empty, the roi image from the labels will not be saved.
 roiSaveType = "jpg"
-roiResize = (64,64)
+roiResize = (128,128)
 
 #create to the label list
 positiveFile = "positives.txt"
@@ -112,8 +112,8 @@ def getLabels(imgFolder, xmlFilename, assignName=""):
 
             if(makeROI_dataset==True):
                 roi = image[labelYstart[i]:labelH[i], labelXstart[i]:labelW[i]]
-                resize = cv2.resize(roi, roiResize, interpolation=cv2.INTER_CUBIC) 
-                cv2.imwrite(roiSaveToFolder + "/" + filename + "-" + str(i)+"."+roiSaveType, resize)
+                #resize = cv2.resize(roi, roiResize, interpolation=cv2.INTER_CUBIC) 
+                cv2.imwrite(roiSaveToFolder + "/" + filename + "-" + str(i)+"."+roiSaveType, roi)
 
             cv2.rectangle(image, (labelXstart[i], labelYstart[i]), (labelXstart[i]+int(labelW[i]-labelXstart[i]), labelYstart[i]+int(labelH[i]-labelYstart[i])), (0,0,0), -1)
             #cv2.imshow("BG", image)
@@ -161,6 +161,7 @@ def sliding_window(image, stepSize, windowSize):
 if not os.path.exists(folderPROJECT + "/"):
     os.makedirs(folderPROJECT + "/")
 
+# get all labels as positives
 i = 0
 with open(positiveFile, 'a') as the_file:
 
@@ -225,7 +226,7 @@ if(makeNegativeDataset==True):
                         cv2.rectangle(clone, (x, y), (x + negativeSize[0], y + negativeSize[1]), (0, 255, 0), 2)
                         cv2.imwrite(negativeFolder + "/" + str(time.time()) + "." + negativeType, window)
 
-                        resize = cv2.resize(window, roiResize, interpolation=cv2.INTER_CUBIC) 
+                        #window = cv2.resize(window, roiResize, interpolation=cv2.INTER_CUBIC) 
                         cv2.imwrite(negativeDP + "/" + str(time.time()) + "." + negativeType, window)
 
             usedImageCount += 1 
