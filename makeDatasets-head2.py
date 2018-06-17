@@ -32,7 +32,7 @@ negativeDP = "neg-ml"  # thhe size is same with roi size, will be used for ML
 negativeSize = (128,128)
 negativeType = "jpg"
 maxImageUsed = 50  # How many negative images will be used (from background and neg source images)
-negativeImageFolder = "datasets/negSource"  # source for more negative images, except the background images.
+#negativeImageFolder = "datasets/negSource"  # source for more negative images, except the background images.
 negativeFile = "negatives.txt"
 #---------------------------------------------------------------------------
 
@@ -203,7 +203,7 @@ if(makeNegativeDataset==True):
 
     usedImageCount = 0
 
-    for folder in [backgroundFolder, negativeImageFolder]:
+    for folder in [backgroundFolder]:
 
         for file in os.listdir(folder):
             if(usedImageCount>maxImageUsed):

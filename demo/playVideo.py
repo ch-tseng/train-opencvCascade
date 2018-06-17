@@ -19,7 +19,7 @@ videoPath = "/media/sf_ShareFolder/misBLock-2x.mp4"
 face_size = (24, 24)
 monitor_winSize = (640, 640)
 
-face_cascade = cv2.CascadeClassifier('head_step3.xml')
+face_cascade = cv2.CascadeClassifier('step2.xml')
 
 camera = cv2.VideoCapture(videoPath)
 #camera.set(cv2.CAP_PROP_FRAME_WIDTH, cam_resolution[0])
