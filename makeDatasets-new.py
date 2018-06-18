@@ -12,8 +12,10 @@ imgFolder = "datasets/head/1600x1600/images"
 labelName = "head"
 
 numAUG = 3
-maxMaskedBackgrounds = 200
-maxNegSource = 50
+numNegAUG = 5
+
+maxMaskedBackgrounds = 5000
+maxNegSource = 60
 
 folderPROJECT = "head"
 
@@ -201,7 +203,7 @@ with open(positiveDesc, 'a') as the_file:
     avgW = round(wLabels/totalLabels, 1)
     avgH = round(hLabels/totalLabels,1)
     print("----> Average W:H = {}:{}".format(avgW, avgH ))
-    negativeSize = (int(avgW * 1.5), int(avgH * 1.5) )
+    negativeSize = (int(avgW * 1.2), int(avgH * 1.2) )
 
     #make negative images
     usedImageCount = 0
@@ -227,7 +229,7 @@ with open(positiveDesc, 'a') as the_file:
                 image = cv2.imread(maskedBackgrounds + "/" + file)
 
                 # loop over the image pyramid
-                for layer in imgPyramid(image, scale=0.5, minSize=[negativeSize[0],negativeSize[1]]):
+                for layer in imgPyramid(image, scale=0.2, minSize=[negativeSize[0],negativeSize[1]]):
                     #print(layer.shape)
                     # loop over the sliding window for each layer of the pyramid
                     for (x, y, window) in sliding_window(layer, stepSize=negativeSize[0], windowSize=negativeSize):
@@ -237,8 +239,34 @@ with open(positiveDesc, 'a') as the_file:
  
                         #clone = layer.copy()
                         #cv2.rectangle(clone, (x, y), (x + negativeSize[0], y + negativeSize[1]), (0, 255, 0), 2)
-                        cv2.imwrite(negativeFolder + "/" + str(count) + "_" + str(time.time()) + "." + imageKeepType, window)
-                        count += 1
+                        #Image augmentation
+                        datagen = ImageDataGenerator(
+                            zca_whitening=False,
+                            rotation_range=360,
+                            #width_shift_range=0.2,
+                            #height_shift_range=0.2,
+                            shear_range=0.2,
+                            zoom_range=0.2,
+                            horizontal_flip=True,
+                            vertical_flip=True,
+                            fill_mode="nearest")
+
+                        #roi = roi[...,::-1]
+                        x = img_to_array(window)   # this is a Numpy array with shape (3, 150, 150) 
+                        x = x.reshape (( 1 ,) + x.shape)   # this is a Numpy array with shape (1, 3, 150, 150)
+
+                        i =  0 
+                        for batch in datagen.flow(x, batch_size = 1 ,
+                            save_to_dir = negativeFolder, save_prefix = 'aug', save_format = imageKeepType ):
+                            #the_file_aug.write(roi_augFile + "_" + str(i) + "." + imageKeepType + "   1  0 0 " + str(x.shape[1]) + " " + str(x.shape[2]) + '\n')
+                            i +=  1 
+                            count += 1
+                            if i >  numNegAUG :
+                                break   # otherwise the generator would loop indefinitely
+
+
+
+                        #cv2.imwrite(negativeFolder + "/" + str(count) + "_" + str(time.time()) + "." + imageKeepType, window)
 
             usedImageCount += 1 
 
