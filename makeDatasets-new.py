@@ -1,3 +1,4 @@
+
 import glob, os
 import os.path
 import time
@@ -7,17 +8,16 @@ from xml.dom import minidom
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 
 #==============================================================
-xmlFolder = "datasets/head/1600x1600/labels"
-imgFolder = "datasets/head/1600x1600/images"
-labelName = "head"
+xmlFolder = "datasets/palm/v4/labels"
+imgFolder = "datasets/palm/v4/images"
+labelName = "palm"
 
-numAUG = 3
-numNegAUG = 5
+maxAugNegImages = 6000
 
-maxMaskedBackgrounds = 5000
-maxNegSource = 60
+maxMaskedBackgrounds = 0
+maxNegSource = 111
 
-folderPROJECT = "head"
+folderPROJECT = "palm-v4"
 
 imageKeepType = "jpg"
 positiveDesc = "positives.info"
@@ -32,6 +32,8 @@ vecImage = folderPROJECT + ".vec"
 maskedBackgrounds = "masked"
 
 #==============================================================
+numAUG = 6
+numNegAUG = 12
 
 positiveDesc = folderPROJECT + "/" + positiveDesc
 negativeDesc = folderPROJECT + "/" + negativeDesc
@@ -94,7 +96,7 @@ def createPositive(imgFolder, xmlFilename, descFile, assignName=""):
     tmpArrays = labelXML.getElementsByTagName("filename")
     for elem in tmpArrays:
         filenameImage = elem.firstChild.data
-    print ("Image file: " + filenameImage)
+    #print ("Image file: " + filenameImage)
 
 
     tmpArrays = labelXML.getElementsByTagName("name")
@@ -177,7 +179,7 @@ def createPositive(imgFolder, xmlFilename, descFile, assignName=""):
     hLabels += totalH
     totalLabels += countLabels
 
-    print("Average W, H: {}, {}".format(int(totalW/countLabels), int(totalH/countLabels)) )
+    #print("Average W, H: {}, {}".format(int(totalW/countLabels), int(totalH/countLabels)) )
 
     return "../{}  {}  {}".format(filepath+"/"+filename, countLabels, tmpChars)
 
@@ -189,16 +191,16 @@ with open(positiveDesc, 'a') as the_file:
         filename, file_extension = os.path.splitext(file)
 
         if(file_extension==".xml"):
-            print("XML: {}".format(filename))
+            #print("XML: {}".format(filename))
 
             #imgfile = imgFolder+"/"+filename+"."+imageType
             xmlfile = xmlFolder + "/" + file
-            print(xmlfile)
+            #print(xmlfile)
             #if(os.path.isfile(imgfile)):
             outLabels = createPositive(imgFolder, xmlfile, positiveDesc_aug, labelName)
             the_file.write(outLabels + '\n')
-            print( outLabels )
-            print()
+            #print( outLabels )
+            #print()
 
     avgW = round(wLabels/totalLabels, 1)
     avgH = round(hLabels/totalLabels,1)
@@ -211,14 +213,13 @@ with open(positiveDesc, 'a') as the_file:
     foldercount = 0
 
     for folder in [maskedBackgrounds, negSource]:
+        foldercount += 1
+        if(foldercount==1):
+            maxNum = maxMaskedBackgrounds
+        else:
+            maxNum = maxNegSource
 
         for file in os.listdir(folder):
-            if(foldercount==0):
-                maxNum = maxMaskedBackgrounds
-            else:
-                maxNum = maxNegSource
-
-            foldercount += 1
 
             if(usedImageCount>maxNum):
                 break
@@ -226,10 +227,10 @@ with open(positiveDesc, 'a') as the_file:
             filename, file_extension = os.path.splitext(file)
 
             if(file_extension.lower()==".jpg" or file_extension.lower()==".png" or file_extension.lower()==".jpeg"):
-                image = cv2.imread(maskedBackgrounds + "/" + file)
+                image = cv2.imread(folder + "/" + file)
 
                 # loop over the image pyramid
-                for layer in imgPyramid(image, scale=0.2, minSize=[negativeSize[0],negativeSize[1]]):
+                for layer in imgPyramid(image, scale=0.8, minSize=[negativeSize[0],negativeSize[1]]):
                     #print(layer.shape)
                     # loop over the sliding window for each layer of the pyramid
                     for (x, y, window) in sliding_window(layer, stepSize=negativeSize[0], windowSize=negativeSize):
@@ -243,8 +244,8 @@ with open(positiveDesc, 'a') as the_file:
                         datagen = ImageDataGenerator(
                             zca_whitening=False,
                             rotation_range=360,
-                            #width_shift_range=0.2,
-                            #height_shift_range=0.2,
+                            width_shift_range=0.2,
+                            height_shift_range=0.2,
                             shear_range=0.2,
                             zoom_range=0.2,
                             horizontal_flip=True,
@@ -264,11 +265,13 @@ with open(positiveDesc, 'a') as the_file:
                             if i >  numNegAUG :
                                 break   # otherwise the generator would loop indefinitely
 
-
+                        if(count>maxAugNegImages):
+                            break
 
                         #cv2.imwrite(negativeFolder + "/" + str(count) + "_" + str(time.time()) + "." + imageKeepType, window)
 
             usedImageCount += 1 
+
 
 with open(negativeDesc, 'a') as the_file:
     for file in os.listdir(negativeFolder):
@@ -284,7 +287,7 @@ with open(positiveDesc_aug, 'a') as the_file:
     for file in os.listdir(positiveFolder):
         filename, file_extension = os.path.splitext(file)
         if(file_extension.lower()==".jpg" or file_extension.lower()==".png" or file_extension.lower()==".jpeg"):
-            print(positiveFolder + "/" + file)
+            #print(positiveFolder + "/" + file)
             img = cv2.imread(positiveFolder + "/" + file)
             sizeimg = img.shape
             the_file.write( "../" + positiveFolder + "/" + file + '  1  0 0 ' + str(sizeimg[1]) + ' ' + str(sizeimg[0]) + '\n')
