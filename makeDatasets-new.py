@@ -8,16 +8,16 @@ from xml.dom import minidom
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 
 #==============================================================
-xmlFolder = "datasets/palm/v4/labels"
-imgFolder = "datasets/palm/v4/images"
-labelName = "palm"
+xmlFolder = "datasets/head/1600x1600/labels"
+imgFolder = "datasets/head/1600x1600/images"
+labelName = "body"
 
 maxAugNegImages = 6000
 
-maxMaskedBackgrounds = 0
-maxNegSource = 111
+maxMaskedBackgrounds = 150
+maxNegSource = 100
 
-folderPROJECT = "palm-v4"
+folderPROJECT = "body"
 
 imageKeepType = "jpg"
 positiveDesc = "positives.info"
