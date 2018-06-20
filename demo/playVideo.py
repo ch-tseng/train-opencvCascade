@@ -16,10 +16,11 @@ maxPeopleInSeconds = 60  # secoonds, we will take the max number peoples as corr
 peopleCount = []
 
 videoPath = "/media/sf_ShareFolder/misBLock-2x.mp4"
-face_size = (24, 24)
+min_size = (120, 120)
+max_size = (300, 300)
 monitor_winSize = (640, 640)
 
-face_cascade = cv2.CascadeClassifier('step2.xml')
+face_cascade = cv2.CascadeClassifier('body_LBA_48.xml')
 
 camera = cv2.VideoCapture(videoPath)
 #camera.set(cv2.CAP_PROP_FRAME_WIDTH, cam_resolution[0])
@@ -45,9 +46,9 @@ while(camera.isOpened()):
 	
         faces = face_cascade.detectMultiScale(
             gray,
-            scaleFactor= 1.1,
-            minNeighbors=8,
-            minSize=face_size,
+            scaleFactor= 1.3,
+            minNeighbors=12,
+            minSize=min_size,
             flags=cv2.CASCADE_SCALE_IMAGE
         )
     
@@ -55,7 +56,8 @@ while(camera.isOpened()):
         i = 0
         for (x,y,w,h) in faces:
 	
-            if( (w>face_size[0] and h>face_size[1])):
+            if( (w>min_size[0] and h>min_size[1]) and (w<max_size[0] and h<max_size[1]) ):
+                print("(w,h)=({},{})".format(w,h))
                 #roi_color = img[y:y+h, x:x+w]
                 #now=datetime.datetime.now()
                 #faceName = '%s_%s_%s_%s_%s_%s_%s.jpg' % (now.year, now.month, now.day, now.hour, now.minute, now.second, i)
