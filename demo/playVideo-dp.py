@@ -15,18 +15,19 @@ from keras.models import model_from_json
 from skimage import io, transform
 
 #-----------------------------------------------
-useDP = True
-writeIMG = True   #write all roi images after DP
-sizeIMG = (36, 36)
+cascadeFile = "body_LBA_48.xml"
+useDP = False
+writeIMG = True   #write all roi images
+#sizeIMG = (128, 128)
 maxPeopleInSeconds = 60  # secoonds, we will take the max number peoples as correct number in this time range.
 peopleCount = []
 
-videoPath = "/media/sf_ShareFolder/misBLock-2x.mp4"
-min_size = (24, 24)
+videoPath = "misBLock-2x.mp4"
+min_size = (120, 120)
 max_size = (180, 180)
 monitor_winSize = (640, 640)
 savePath = "rois"
-face_cascade = cv2.CascadeClassifier('cascad_v5.xml')
+face_cascade = cv2.CascadeClassifier(cascadeFile)
 
 #-----------------------------------------------------------
 
@@ -72,7 +73,8 @@ class dpModel:
         print(result)
         return False if (result[0][1]>result[0][0]) else True
 
-dp = dpModel("headModel.json", "headModel.h5")
+if(useDP==True):
+    dp = dpModel("headModel.json", "headModel.h5")
 
 while(camera.isOpened()):
     (grabbed, img) = camera.read()
@@ -83,8 +85,8 @@ while(camera.isOpened()):
 	
         faces = face_cascade.detectMultiScale(
             gray,
-            scaleFactor= 1.1,
-            minNeighbors=6,
+            scaleFactor= 1.2,
+            minNeighbors=10,
             minSize=min_size,
             flags=cv2.CASCADE_SCALE_IMAGE
         )
@@ -94,6 +96,7 @@ while(camera.isOpened()):
         for (x,y,w,h) in faces:
 	
             if( (w>min_size[0] and h>min_size[1]) and (w<max_size[0] and h<max_size[1]) ):
+                print("(w, h) = ({}, {})".format(w,h))
                 roi = imgSource[y:y+h, x:x+w]
                 now=datetime.datetime.now()
                 faceName = '%s_%s_%s_%s_%s_%s_%s.jpg' % (now.year, now.month, now.day, now.hour, now.minute, now.second, i)
@@ -112,7 +115,8 @@ while(camera.isOpened()):
                 else:
                     cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),3)
                     i += 1
-                    #cv2.imwrite(savePath+"/all/" + faceName, roi)
+                    if(writeIMG==True):
+                        cv2.imwrite(savePath+"/1/" + faceName, roi)
 
 
         peopleNumerList(i) #Put the current people counts to array.
