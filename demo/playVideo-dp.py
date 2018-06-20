@@ -15,12 +15,15 @@ from keras.models import model_from_json
 from skimage import io, transform
 
 #-----------------------------------------------
-useDP = False
+useDP = True
+writeIMG = True   #write all roi images after DP
+sizeIMG = (36, 36)
 maxPeopleInSeconds = 60  # secoonds, we will take the max number peoples as correct number in this time range.
 peopleCount = []
 
-videoPath = "/media/sf_VMshare/demo/mis-office-demo.mp4"
-face_size = (24, 24)
+videoPath = "/media/sf_ShareFolder/misBLock-2x.mp4"
+min_size = (24, 24)
+max_size = (180, 180)
 monitor_winSize = (640, 640)
 savePath = "rois"
 face_cascade = cv2.CascadeClassifier('cascad_v5.xml')
@@ -44,6 +47,7 @@ def peopleNumerList(numPeople = 0):
 
     peopleCount.append(numPeople)
 
+
 class dpModel:
     def __init__(self, dpmodel, dpweights):
         # load json and create model
@@ -56,7 +60,7 @@ class dpModel:
         print("Loaded model from disk")
 
     def reshaped_image(self, image):
-        return transform.resize(image,(24, 24, 3)) # (cols (width), rows (height)) and don't u$
+        return transform.resize(image,(48, 48, 3)) # (cols (width), rows (height)) and don't u$
 
     def predict(self, img):
         test_image = []
@@ -68,7 +72,7 @@ class dpModel:
         print(result)
         return False if (result[0][1]>result[0][0]) else True
 
-dp = dpModel("model_heads.json", "model_heads.h5")
+dp = dpModel("headModel.json", "headModel.h5")
 
 while(camera.isOpened()):
     (grabbed, img) = camera.read()
@@ -81,7 +85,7 @@ while(camera.isOpened()):
             gray,
             scaleFactor= 1.1,
             minNeighbors=6,
-            minSize=face_size,
+            minSize=min_size,
             flags=cv2.CASCADE_SCALE_IMAGE
         )
     
@@ -89,7 +93,7 @@ while(camera.isOpened()):
         i = 0
         for (x,y,w,h) in faces:
 	
-            if( (w>face_size[0] and h>face_size[1])):
+            if( (w>min_size[0] and h>min_size[1]) and (w<max_size[0] and h<max_size[1]) ):
                 roi = imgSource[y:y+h, x:x+w]
                 now=datetime.datetime.now()
                 faceName = '%s_%s_%s_%s_%s_%s_%s.jpg' % (now.year, now.month, now.day, now.hour, now.minute, now.second, i)
@@ -97,14 +101,18 @@ while(camera.isOpened()):
                     if(dp.predict(roi)==True):
                         cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),3)
                         i += 1
-                        cv2.imwrite(savePath+"/1/" + faceName, roi)
+                        print("True")
+                        if(writeIMG==True):
+                            cv2.imwrite(savePath+"/1/" + faceName, roi)
                     else:
-                        cv2.imwrite(savePath+"/0/" + faceName, roi)
+                        print("False")
+                        if(writeIMG==True):
+                            cv2.imwrite(savePath+"/0/" + faceName, roi)
 
                 else:
                     cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),3)
                     i += 1
-                    cv2.imwrite(savePath+"/all/" + faceName, roi)
+                    #cv2.imwrite(savePath+"/all/" + faceName, roi)
 
 
         peopleNumerList(i) #Put the current people counts to array.
